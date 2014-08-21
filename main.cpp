@@ -80,22 +80,43 @@ int main(int argc, char* argv[]){
 				fstream fs;
 				fs.open(c, fstream::out|fstream::app);
 
-				for(int i=0;i<mat.size();i++){
-					cout<<"Ingrese el valor de "<<mat.at(i).at(0)<<"(Tipo "<<mat.at(i).at(1)<<", tamaño "<<mat.at(i).at(2)<<")"<<endl;//en lugar de int en tipo debe decir "caracter", "entero", etc
-						const char * c3 = mat.at(i).at(1).c_str();
-						if(strcmp(c3, "1")){//char
-							cin>>enterChar;
-							fs<<enterChar;
-							fs<<"|";
-							//o cin>>enterString, dependiendo de si mat.at(i).at(2)>1
-						}else if(strcmp(c3, "2")){//int
+				for(int i=0;i<mat.size();i++){//to do: validar no meter valores repetidos si es llave
+					cout<<"Ingrese el valor de "<<mat.at(i).at(0)<<" (Tipo "<<mat.at(i).at(1)<<", tamaño "<<mat.at(i).at(2)<<")"<<endl;//en lugar de int en tipo debe decir "caracter", "entero", etc
+						const char * c3 = mat.at(i).at(1).c_str();//tipo
+						int tipo = atoi(c3);
+						//const char * csize = mat.at(i).at(2).c_str();
+						//int size = atoi(csize);
+						cout<<"-----------------------"<<c3<<"------------------------"<<endl;
+						if(tipo==1){//char
+							/*if(size==1){
+								cin>>enterChar;
+								getchar();
+								fs<<enterChar;
+							}/*else if (size>1){								
+								cin>>enterString;
+								enterString.resize(size, '0');
+								cout<<"-----------------------"<<enterString<<"------------------------"<<endl;
+								fs<<enterString;
+							}*/
+							//lo de arriba no funciona
+							cin>>enterChar;//test, al parecer siempre entra aqui a pesar de que quiero int o double.... ffs EDIT: parece que lo arreglé, will look tomorrow
+							if(i!=(mat.size()-1)){
+								fs<<"|";
+							}
+						}else if(tipo==2){//int
 							cin>>enterInt;
 							fs<<enterInt;
-							fs<<"|";
-						}else if(strcmp(c3, "3")){//real
+							if(i!=(mat.size()-1)){
+								fs<<"|";
+							}
+						}else if(tipo==3){//real
 							cin>>enterDouble;
 							fs<<enterDouble;
-							fs<<"|";
+							if(i!=(mat.size()-1)){
+								fs<<"|";
+							}
+						}else{
+							cout<<"Estructura corrupta"<<endl;
 						}
 				}
 				fs<<"\n";
@@ -219,7 +240,21 @@ void createStructure(){
 void imprimirEstructura(vector<campo> v){
 	cout<<"Campo\tNombre\tTipo\tLongitud\tLlave"<<endl;
 	for(int i=0;i<v.size();i++){
-		cout<<1<<'\t'<<v.at(i).getName()<<'\t'<<v.at(i).getType()<<'\t'<<v.at(i).getSize()<<"\t\t"<<v.at(i).getIsKey()<<endl;
+		cout<<(i+1)<<'\t'<<v.at(i).getName()<<'\t';
+		
+		if(v.at(i).getType()==1){
+			cout<<"Char";
+		}else if(v.at(i).getType()==2){
+			cout<<"Entero";
+		}else if(v.at(i).getType()==3){
+			cout<<"Real";
+		}
+		cout<<"\t"<<v.at(i).getSize()<<"\t\t";
+
+		if(v.at(i).getIsKey()==1){
+			cout<<'*';
+		}
+		cout<<endl;
 	}
 }
 

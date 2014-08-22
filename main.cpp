@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cmath>
+#include <iomanip>
 #include "campo.h"
 
 using namespace std;//ayy lmao
@@ -134,12 +136,13 @@ string workingFile(){
 void createStructure(){
 	string fileName;//nombre archivo
 	int fieldNumber;//numero de campos
+	int LongitudRegistro = 0;
 	bool thereIsKey=false;
 	cout<<"Ingrese el nombre de la estructura:"<<endl;
 	cin>>fileName;//validar que no exista otro con el mismo nombre(?)
 	cout<<"¿Cuántos campos?:"<<endl;
 	cin>>fieldNumber;
-
+	LongitudRegistro += fieldNumber+1;
 	vector<campo> campos;
 
 	for(int i=0;i<fieldNumber;i++){
@@ -152,6 +155,7 @@ void createStructure(){
 		cin>>fieldT;
 		cout<<"Ingrese el tamaño:"<<endl;//validar
 		cin>>fieldS;
+		LongitudRegistro+=fieldS;
 		if(!thereIsKey){
 		cout<<"¿Es llave primaria? (s/n)"<<endl;
 		cin>>k;
@@ -174,7 +178,7 @@ void createStructure(){
 	ofstream estruc(c);
 
 	if(estruc.is_open()){
-		estruc<<"0-1$"<<campos.size()<<"$\n";
+		estruc<<"0-1$"<<campos.size()<<"$"<<LongitudRegistro<<"$\n";
 		for(int i=0;i<campos.size();i++){
 			estruc<<campos.at(i).getName()<<'|'<<campos.at(i).getType()<<'|'<<campos.at(i).getSize()<<'|'<<campos.at(i).getIsKey()<<"$";
 		}
@@ -227,22 +231,35 @@ void AddRegistro(){
 		//entradas posibles
 		int enterInt;
 		double enterDouble;
-		char enterChar;
+		//char enterChar;
 		string enterString;//tamaño
 		////////////////////
 
 		if(regis.is_open()){
+			stringstream StringOutFile;
+
+			string NewAvail = "0-1";
+			fstream fs;
+			FILE* OutAvail;
 			string line;
 			getline(regis, line);
 			Header1 = split(line,'$');
 			const char * CAvailList = Header1.at(0).c_str();
+			bool Avail = false;
+			if (strcmp(CAvailList,"0-1"))
+				Avail = true;
 			const char * CNumeroCampos = Header1.at(1).c_str();
+			int LongitudRegistro = atoi(Header1.at(2).c_str());
 			
-			int AvailList = atoi (CAvailList);
 			int NumeroCampos = atoi (CNumeroCampos);
+			int AvailNum = atoi(CAvailList);
+
+			//cout <<"AvailNum "<<AvailNum<<endl;
 			
 			string LineCampos;
 			getline(regis,LineCampos);
+			int HeaderSize = regis.tellg();
+
 			vector<string> tempCampos = split(LineCampos,'$');
 			for (int i = 0; i<tempCampos.size();i++){
 				buffer = split(tempCampos.at(i),'|');
@@ -250,52 +267,108 @@ void AddRegistro(){
 			}
 			
 			regis.close();
-			fstream fs;
-			fs.open(c, fstream::out|fstream::app);
+			
+			if (!Avail){
+				fs.open(c, fstream::out|fstream::app);
+			}else{
+				//char NewAvail[3];
+				OutAvail = fopen(c,"r+");
+				//fseek(OutAvail,(AvailNum*LongitudRegistro)+HeaderSize,SEEK_SET);
+				//fgetc(OutAvail);
+				//for(int i = 0 ; i < 3 ; i++)
+				//	NewAvail[i] = fgetc(OutAvail);
+				//fseek(OutAvail,0,SEEK_SET);
+				//fputs(NewAvail,OutAvail);
+			}
 
 			for(int i=0;i<Campos.size();i++){//to do: validar no meter valores repetidos si es llave
-				cout<<"Ingrese el valor de "<<Campos.at(i).at(0)<<" (Tipo "<<Campos.at(i).at(1)<<", tamaño "<<Campos.at(i).at(2)<<")"<<endl;//en lugar de int en tipo debe decir "caracter", "entero", etc
 				const char * c3 = Campos.at(i).at(1).c_str();//tipo
 				int tipo = atoi(c3);
-				//const char * csize = Campos.at(i).at(2).c_str();
-				//int size = atoi(csize);
-				cout<<"-----------------------"<<c3<<"------------------------"<<endl;
-				if(tipo==1){//char
-					/*if(size==1){
-						cin>>enterChar;
-						getchar();
-						fs<<enterChar;
-					}/*else if (size>1){								
-						cin>>enterString;
-						enterString.resize(size, '0');
-						cout<<"-----------------------"<<enterString<<"------------------------"<<endl;
-						fs<<enterString;
-					}*/
-					//lo de arriba no funciona
-					cin>>enterChar;//test, al parecer siempre entra aqui a pesar de que quiero int o double.... ffs EDIT: parece que lo arreglé, will look tomorrow
-					if(i!=(Campos.size()-1)){
-						fs<<"|";
-					}
-				}else if(tipo==2){//int
-					cin>>enterInt;
-					fs<<enterInt;
-					if(i!=(Campos.size()-1)){
-							fs<<"|";
-					}
-				}else if(tipo==3){//real
-					cin>>enterDouble;
-					fs<<enterDouble;
-					if(i!=(Campos.size()-1)){
-						fs<<"|";
-					}
+				cout<<"Ingrese el valor de "<<Campos.at(i).at(0);
+				if(tipo==1){
+					cout<<" (Caracter";
+				}else if(tipo==2){
+					cout<<" (Entero";
+				}else if(tipo==3){
+					cout<<" (Real";
 				}else{
 					cout<<"Estructura corrupta"<<endl;
+					break;
 				}
+
+				cout<<", tamaño "<<Campos.at(i).at(2)<<")"<<endl;//en lugar de int en tipo debe decir "caracter", "entero", etc
+						
+					const char * csize = Campos.at(i).at(2).c_str();
+					int size = atoi(csize);
+					if(tipo==1){//char
+						while(true){
+						cin>>enterString;
+						if(enterString.size()>size){
+							cout<<"Ha ingresado un caracter de mayor tamaño. Por favor ingrese uno de tamaño "<<size<<" o menor."<<endl;
+						}else{
+							enterString.resize(size, ' ');
+							break;
+						}
+						}
+						if (!Avail){
+							fs<<enterString;
+							
+							fs<<"|";
+						}else{
+							StringOutFile<<enterString<<"|";
+							//fseek()
+						}
+					}else if(tipo==2){//int
+						while(true){
+							cin>>enterInt;
+							if(enterInt>=(pow(10, size))){
+								cout<<"Ha ingresado un entero de mayor tamaño. Por favor ingrese un entero de tamaño "<<size<<" o menor."<<endl;
+							}else if(enterInt<1){
+								cout<<"Ha ingresado un entero negativo. Por gavor solo ingrese valores positivos"<<endl;
+							}else{
+								break;
+							}
+						}
+						if (!Avail){
+							fs<< setw(size) << setfill('0') << enterInt;
+						//fs<<enterInt;
+							fs<<"|";
+						}else{
+							StringOutFile<<setw(size) << setfill('0') << enterInt <<"|";
+						}
+					}else if(tipo==3){//real//VALIDAR TODO ESTO
+						cin>>enterDouble;
+						fs<<enterDouble;
+						if(i!=(Campos.size()-1)){
+							fs<<"|";
+						}
+					}else{
+						cout<<"Estructura corrupta"<<endl;
+						break;
+					}
 			}
-			fs<<"\n";
-			fs.close();
+			if (!Avail){
+				fs<<"\n";
+
+				fs.close();
+			}else{
+				char NewAvail[3];
+				fseek(OutAvail,(AvailNum*LongitudRegistro)+HeaderSize,SEEK_SET);
+				fgetc(OutAvail);
+				for(int i = 0 ; i < 3 ; i++)
+					NewAvail[i] = fgetc(OutAvail);
+				fseek(OutAvail,0,SEEK_SET);
+				fputs(NewAvail,OutAvail);
+
+				fclose(OutAvail);
+				OutAvail = fopen(c,"r+");
+				fseek(OutAvail,(AvailNum*LongitudRegistro)+HeaderSize,SEEK_SET);
+				//cout << StringOutFile.str() << endl;
+				fputs(StringOutFile.str().c_str(),OutAvail);
+				fclose(OutAvail);
+			}
 		}else{
-			cout<<"No se abrio estructura"<<endl;
+			cout<<"Error abriendo la estructura"<<endl;
 		}
 	}
 }
@@ -312,18 +385,19 @@ void DeleteRegistro(){
 		int HeaderSize = 0;
 		string AvailList = "0-1";
 		int LongitudRegistro = 0;
+		
 		if(regis.is_open()){
 			string line;
 			getline(regis, line);
 			vector<string> tempHeader = split(line,'$');
 			AvailList = tempHeader[0];
-			LongitudRegistro += atoi(tempHeader[1].c_str()) + 1;
+
+			LongitudRegistro = atoi(tempHeader[2].c_str());
 			getline(regis,line);
 
 			vector<string> tempEstructura = split(line,'$');
 			for (int i = 0; i<tempEstructura.size();i++){
 				vector<string> buffer = split(tempEstructura.at(i),'|');
-				LongitudRegistro += atoi(buffer[2].c_str());
 			}
 
 			HeaderSize = regis.tellg();
@@ -342,7 +416,10 @@ void DeleteRegistro(){
 			const char * css = buffer.at(0).c_str();
 			if (ReadLine[0] != '*'){
 				Registros.push_back(buffer);
-				cout<<ReadLine<<endl;
+				cout<<i<<")\t";
+				for (int j = 0;j<buffer.size()-1;j++)
+					cout<<buffer[j]<<"\t";
+				cout<<"\n";
 			}
 			i++;
 		}
@@ -352,8 +429,8 @@ void DeleteRegistro(){
 		//ofstream RegisO;
 		//RegisO.open(c,ofstream::app);
 		int Selection;
-		cout<<"Ingrese compa a borrar"<<endl;
-		cin>>Selection;
+		cout<<"Ingrese registro a eliminar"<<endl;
+		cin>>Selection;//validar
 		
 		string SNewAvail = Registros.at(Selection).at(Registros.at(Selection).size()-1);
 		Selection = atoi(SNewAvail.c_str());
@@ -395,6 +472,7 @@ void ListarRegistros(){
 		if(regis.is_open()){
 			string line;
 			getline(regis, line);
+			/*
 			Header1 = split(line,'$');
 			const char * CAvailList = Header1.at(0).c_str();
 			const char * CNumeroCampos = Header1.at(1).c_str();
@@ -403,11 +481,17 @@ void ListarRegistros(){
 			int NumeroCampos = atoi (CNumeroCampos);
 			
 			string LineCampos;
-			getline(regis,LineCampos);
-			vector<string> tempCampos = split(LineCampos,'$');
+			*/
+			getline(regis,line);
+			
+			vector<string> tempCampos = split(line,'$');
+			cout<<"--\t";
 			for (int i = 0; i<tempCampos.size();i++){
 				vector<string> buffer = split(tempCampos.at(i),'|');
+				cout<<buffer[0]<<"\t";
 			}
+			cout<<endl;
+			
 		}
 
 		//Para la impresion bonita?
@@ -416,8 +500,12 @@ void ListarRegistros(){
 		while(getline(regis,ReadLine)){
 			vector<string> buffer = split(ReadLine,'|');
 			const char * css = buffer.at(0).c_str();
-			if (ReadLine[0] != '*')
-				cout<<ReadLine<<endl;
+			if (ReadLine[0] != '*'){
+				cout<<i<<")\t";
+				for (int j = 0;j<buffer.size();j++)
+					cout<<buffer[j]<<"\t";
+				cout<<"\n";
+			}
 			i++;
 		}
 	}

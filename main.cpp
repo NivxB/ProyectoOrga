@@ -4,7 +4,10 @@
 #include <vector>
 #include <sstream>
 #include <cstdlib>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "campo.h"
 
 using namespace std;//ayy lmao
@@ -312,20 +315,18 @@ void DeleteRegistro(){
 		if(regis.is_open()){
 			string line;
 			getline(regis, line);
-			Header1 = split(line,'$');
-			HeaderSize += sizeof(Header1)-1;
-			AvailList = Header1.at(0).c_str();
-			
-			const char * CNumeroCampos = Header1.at(1).c_str();
-			int NumeroCampos = atoi (CNumeroCampos);
-			
-			string LineCampos;
-			getline(regis,LineCampos);
-			vector<string> tempCampos = split(LineCampos,'$');
-			for (int i = 0; i<tempCampos.size();i++){
-				vector<string> buffer = split(tempCampos.at(i),'|');
-				HeaderSize += sizeof(buffer)-1;
+			vector<string> tempHeader = split(line,'$');
+			AvailList = tempHeader[0];
+			LongitudRegistro += atoi(tempHeader[1].c_str()) + 1;
+			getline(regis,line);
+
+			vector<string> tempEstructura = split(line,'$');
+			for (int i = 0; i<tempEstructura.size();i++){
+				vector<string> buffer = split(tempEstructura.at(i),'|');
+				LongitudRegistro += atoi(buffer[2].c_str());
 			}
+
+			HeaderSize = regis.tellg();
 		}
 
 		string ReadLine;
@@ -333,36 +334,29 @@ void DeleteRegistro(){
 		vector<vector<string> > Registros;
 		while(getline(regis,ReadLine)){
 			char numstr[21]; // enough to hold all numbers up to 64-bits
-			string result = itoa( i, numstr, 10);
+			snprintf(numstr, sizeof(numstr), "%d", i);
 			
-			ReadLine += result;
+			ReadLine += numstr;
 			
 			vector<string> buffer = split(ReadLine,'|');
 			const char * css = buffer.at(0).c_str();
-			if (strcmp(css,"*"))
+			if (ReadLine[0] != '*'){
 				Registros.push_back(buffer);
 				cout<<ReadLine<<endl;
+			}
 			i++;
 		}
 		regis.close();
 		
-		FILE* OUTF;
-		OUTF = fopen(c,"a+");
-		fseek (OUTF,0,HeaderSize);
-		
-		string H[] = {"*","1"};		
-		fwrite(H,sizeof(string),sizeof(H),OUTF);
-		
-		fclose( OUTF );
-		
-		/*
-		fstream RegisO;
-		RegisO.open(c,fstream::out);
+
+		//ofstream RegisO;
+		//RegisO.open(c,ofstream::app);
 		int Selection;
 		cout<<"Ingrese compa a borrar"<<endl;
 		cin>>Selection;
 		
 		string SNewAvail = Registros.at(Selection).at(Registros.at(Selection).size()-1);
+		Selection = atoi(SNewAvail.c_str());
 		string NewAvail;
 		if (SNewAvail.size() < 10)
 			NewAvail = "00"+SNewAvail;
@@ -370,17 +364,21 @@ void DeleteRegistro(){
 			NewAvail = "0";
 		else
 			NewAvail = SNewAvail;
-	
-		
 		
 			
-		LONGITUD REGISTRO (SUMA DE LONGITUD INDIVIDUAL + CAMPOS(por los |))
+		//LONGITUD REGISTRO (SUMA DE LONGITUD INDIVIDUAL + CAMPOS(por los |))
 		
 		
-		RegisO.seekp((Selection*LongitudRegistro)+HeaderSize);
+		//RegisO.seekp((Selection*LongitudRegistro)+HeaderSize);
 		string Deleted = "*"+AvailList;
-		RegisO.write(Deleted.c_str(),sizeof(Deleted.c_str()));
-		*/
+		//RegisO.write(Deleted.c_str(),Deleted.size());
+		FILE* OutF = fopen(c,"r+");
+		fseek(OutF,(Selection*LongitudRegistro)+HeaderSize,SEEK_SET);
+		fputs(Deleted.c_str(),OutF);
+
+		fseek(OutF,0,SEEK_SET);
+		fputs(NewAvail.c_str(),OutF);
+		fclose(OutF);
 		
 	}
 }
@@ -418,7 +416,7 @@ void ListarRegistros(){
 		while(getline(regis,ReadLine)){
 			vector<string> buffer = split(ReadLine,'|');
 			const char * css = buffer.at(0).c_str();
-			if (strcmp(css,"*"))
+			if (ReadLine[0] != '*')
 				cout<<ReadLine<<endl;
 			i++;
 		}

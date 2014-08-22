@@ -178,7 +178,7 @@ void createStructure(){
 	ofstream estruc(c);
 
 	if(estruc.is_open()){
-		estruc<<"0-1$"<<campos.size()<<"$"<<LongitudRegistro<<"$\n";
+		estruc<<"000-1$"<<campos.size()<<"$"<<LongitudRegistro<<"$\n";
 		for(int i=0;i<campos.size();i++){
 			estruc<<campos.at(i).getName()<<'|'<<campos.at(i).getType()<<'|'<<campos.at(i).getSize()<<'|'<<campos.at(i).getIsKey()<<"$";
 		}
@@ -352,10 +352,10 @@ void AddRegistro(){
 
 				fs.close();
 			}else{
-				char NewAvail[3];
+				char NewAvail[5];
 				fseek(OutAvail,(AvailNum*LongitudRegistro)+HeaderSize,SEEK_SET);
 				fgetc(OutAvail);
-				for(int i = 0 ; i < 3 ; i++)
+				for(int i = 0 ; i < 5 ; i++)
 					NewAvail[i] = fgetc(OutAvail);
 				fseek(OutAvail,0,SEEK_SET);
 				fputs(NewAvail,OutAvail);
@@ -383,17 +383,21 @@ void DeleteRegistro(){
 		ifstream regis(c);
 		vector<string> Header1;
 		int HeaderSize = 0;
-		string AvailList = "0-1";
+		string AvailList = "000-1";
 		int LongitudRegistro = 0;
 		
 		if(regis.is_open()){
+			cout<< "ini " << regis.tellg()<<endl;
+		
 			string line;
 			getline(regis, line);
+			cout<< "1 " << regis.tellg()<<endl;
 			vector<string> tempHeader = split(line,'$');
 			AvailList = tempHeader[0];
 
 			LongitudRegistro = atoi(tempHeader[2].c_str());
 			getline(regis,line);
+			cout<< "2 " << regis.tellg()<<endl;
 
 			vector<string> tempEstructura = split(line,'$');
 			for (int i = 0; i<tempEstructura.size();i++){
@@ -401,6 +405,8 @@ void DeleteRegistro(){
 			}
 
 			HeaderSize = regis.tellg();
+			
+			cout<<"Cuca "<<HeaderSize<<endl;
 		}
 
 		string ReadLine;
@@ -408,7 +414,10 @@ void DeleteRegistro(){
 		vector<vector<string> > Registros;
 		while(getline(regis,ReadLine)){
 			char numstr[21]; // enough to hold all numbers up to 64-bits
-			snprintf(numstr, sizeof(numstr), "%d", i);
+			//snprintf(numstr, sizeof(numstr), "%d", i);
+			itoa(i,numstr,10);
+			
+			//cout<<numstr[0]<<numstr[1]<<numstr[2]<<numstr[3]<<numstr[4]<<endl;
 			
 			ReadLine += numstr;
 			
@@ -416,10 +425,12 @@ void DeleteRegistro(){
 			const char * css = buffer.at(0).c_str();
 			if (ReadLine[0] != '*'){
 				Registros.push_back(buffer);
-				cout<<i<<")\t";
+				/*cout<<i<<")\t";
 				for (int j = 0;j<buffer.size()-1;j++)
 					cout<<buffer[j]<<"\t";
+					
 				cout<<"\n";
+				*/
 			}
 			i++;
 		}
@@ -432,13 +443,17 @@ void DeleteRegistro(){
 		cout<<"Ingrese registro a eliminar"<<endl;
 		cin>>Selection;//validar
 		
-		string SNewAvail = Registros.at(Selection).at(Registros.at(Selection).size()-1);
+		string SNewAvail = Registros.at(Selection).back();
 		Selection = atoi(SNewAvail.c_str());
 		string NewAvail;
-		if (SNewAvail.size() < 10)
+		if (SNewAvail.size() < 2)
+			NewAvail = "0000"+SNewAvail;
+		else if (SNewAvail.size() < 3)
+			NewAvail = "000"+SNewAvail;
+		else if(SNewAvail.size()< 4)
 			NewAvail = "00"+SNewAvail;
-		else if (SNewAvail.size() < 100)
-			NewAvail = "0";
+		else if(SNewAvail.size()< 5)
+			NewAvail = "0"+SNewAvail;
 		else
 			NewAvail = SNewAvail;
 		
@@ -451,6 +466,9 @@ void DeleteRegistro(){
 		//RegisO.write(Deleted.c_str(),Deleted.size());
 		FILE* OutF = fopen(c,"r+");
 		fseek(OutF,(Selection*LongitudRegistro)+HeaderSize,SEEK_SET);
+		
+		cout << Selection <<" "<< LongitudRegistro <<" "<<HeaderSize << endl;
+		
 		fputs(Deleted.c_str(),OutF);
 
 		fseek(OutF,0,SEEK_SET);

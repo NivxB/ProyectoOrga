@@ -1,4 +1,4 @@
 all:
-	g++ main.cpp campo.cpp -o Final && ./Final
+	g++ main.cpp campo.cpp && ./a.out
 clean:
-	rm *.dat ./Final
+	rm *.dat *.out

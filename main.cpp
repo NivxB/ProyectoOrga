@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <iomanip>
+#include <algorithm>
 #include "campo.h"
 
 using namespace std;//ayy lmao
@@ -20,6 +21,7 @@ void imprimirEstructura(vector<campo>);
 void AddRegistro();
 void DeleteRegistro();
 void ListarRegistros();
+void buscarRegistro();
 
 vector<string> &split(const string &s, char delim, vector<string> &elems) {
     stringstream ss(s);
@@ -35,6 +37,37 @@ vector<string> split(const string &s, char delim) {
     vector<string> elems;
     split(s, delim, elems);
     return elems;
+}
+
+/**
+ * C++ version 0.4 std::string style "itoa":
+ * Contributions from Stuart Lowe, Ray-Yuan Sheu,
+ * Rodrigo de Salvo Braz, Luc Gallant, John Maloney
+ * and Brian Hunt
+ */
+std::string itoa(int value, int base) {
+	
+	std::string buf;
+	
+	// check that the base if valid
+	if (base < 2 || base > 16) return buf;
+
+	enum { kMaxDigits = 35 };
+	buf.reserve( kMaxDigits ); // Pre-allocate enough space.
+	
+	int quotient = value;
+	
+	// Translating number to string with base:
+	do {
+		buf += "0123456789abcdef"[ std::abs( quotient % base ) ];
+		quotient /= base;
+	} while ( quotient );
+	
+	// Append the negative sign
+	if ( value < 0) buf += '-';
+	
+	reverse( buf.begin(), buf.end() );
+	return buf;
 }
 
 int main(int argc, char* argv[]){
@@ -58,7 +91,7 @@ int main(int argc, char* argv[]){
 				bool RegistroSelect = true;
 				while (RegistroSelect){
 					int SelectionRegistro;
-					cout<<"-------------------------\n1. Agregar\n2. Eliminar\n3. ?????\n4. Retornar"<<endl;
+					cout<<"-------------------------\n1. Agregar\n2. Eliminar\n3. Buscar \n4. Retornar"<<endl;
 					cin>>SelectionRegistro;
 					switch(SelectionRegistro){
 						case 1:{
@@ -70,7 +103,7 @@ int main(int argc, char* argv[]){
 							break;
 						}
 						case 3:{
-							cout<<"profit"<<endl;
+							buscarRegistro();
 							break;
 						}			
 						case 4:{
@@ -405,17 +438,15 @@ void DeleteRegistro(){
 			}
 
 			HeaderSize = regis.tellg();
-			
-			cout<<"Cuca "<<HeaderSize<<endl;
 		}
 
 		string ReadLine;
-		int i = 0;
+		int i = 0,Regis=0;
 		vector<vector<string> > Registros;
 		while(getline(regis,ReadLine)){
-			char numstr[21]; // enough to hold all numbers up to 64-bits
+			string numstr; // enough to hold all numbers up to 64-bits
 			//snprintf(numstr, sizeof(numstr), "%d", i);
-			itoa(i,numstr,10);
+			numstr = itoa(i, 10);
 			
 			//cout<<numstr[0]<<numstr[1]<<numstr[2]<<numstr[3]<<numstr[4]<<endl;
 			
@@ -425,12 +456,12 @@ void DeleteRegistro(){
 			const char * css = buffer.at(0).c_str();
 			if (ReadLine[0] != '*'){
 				Registros.push_back(buffer);
-				/*cout<<i<<")\t";
+				cout<<Regis<<")\t";
 				for (int j = 0;j<buffer.size()-1;j++)
 					cout<<buffer[j]<<"\t";
-					
+
 				cout<<"\n";
-				*/
+				Regis++;
 			}
 			i++;
 		}
@@ -478,6 +509,43 @@ void DeleteRegistro(){
 	}
 }
 
+void buscarRegistro(){
+	string file = workingFile();
+	const char * c = file.c_str();
+	if(strcmp(c,"NULL")==0){
+		cout<<"oyy vey schlomo mcShekels"<<endl;
+	}else{
+		ifstream regis(c);
+		if(regis.is_open()){
+			string line, buscar;
+			int i=0;//linea donde se encuentra la cadena
+			getline(regis, line);
+			getline(regis, line);
+			cout<<"Ingrese el valor del campo que desea buscar:"<<endl;
+			cin>>buscar;
+			const char* b = buscar.c_str();
+			if(strcmp(b, "")==0){
+				cout<<"Ese no es un valor válido"<<endl;
+			}else{
+				bool encontrado = false;
+				while(getline(regis, line)){
+				i++;
+				size_t found = line.find(buscar);
+				if (found!=string::npos){
+					cout<<buscar<<" encontrado en linea "<<i<<" posición "<<found<<endl;
+					encontrado = true;
+				}
+				}
+				if(!encontrado){
+					cout<<"No se encontró"<<endl;
+				}
+			}
+		}else{
+			cout<<"Error abriendo archivo "<<file<<endl;
+		}
+	}
+}
+
 void ListarRegistros(){
 	string file = workingFile();
 	const char * c = file.c_str();
@@ -514,15 +582,16 @@ void ListarRegistros(){
 
 		//Para la impresion bonita?
 		string ReadLine;
-		int i = 0;
+		int i = 0,Regis = 0;
 		while(getline(regis,ReadLine)){
 			vector<string> buffer = split(ReadLine,'|');
 			const char * css = buffer.at(0).c_str();
 			if (ReadLine[0] != '*'){
-				cout<<i<<")\t";
+				cout<<Regis<<")\t";
 				for (int j = 0;j<buffer.size();j++)
 					cout<<buffer[j]<<"\t";
 				cout<<"\n";
+				Regis++;
 			}
 			i++;
 		}

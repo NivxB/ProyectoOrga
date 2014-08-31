@@ -23,6 +23,7 @@
 	void DeleteRegistro();
 	void ListarRegistros();
 	void buscarRegistro();
+	void BuscarRegistroIndice();
 
 	vector<IndexClass> Index;
 
@@ -152,7 +153,18 @@
 								break;
 							}
 							case 3:{
-								buscarRegistro();
+								int selBuscar;
+								cout<<"-------------------------\n1. Indice\n2. Sin Indice\n"<<endl;
+								switch(selBuscar){
+									case 1:{
+										BuscarRegistroIndice();
+										break;
+									}
+									case 2:{
+										buscarRegistro();
+										break;
+									}
+								}
 								break;
 							}			
 							case 4:{
@@ -692,5 +704,53 @@
 				i++;
 			}
 		}
+	}
+
+
+	void BuscarRegistroIndice(){
+		string file = workingFile();
+		const char * c = file.c_str();
+		string buscar;
+		int POSEncontrado = -1,LongitudRegistro = 0,HeaderSize = 0;
+		if(strcmp(c,"NULL")==0){
+			cout<<"oyy vey schlomo mcShekels"<<endl;
+		}else{
+			ifstream regis(c);
+			int HeaderSize = 0;
+			int LongitudRegistro = 0;
+			
+			if(regis.is_open()){
+				string line;
+				getline(regis, line);
+				vector<string> tempHeader = split(line,'$');
+				LongitudRegistro = atoi(tempHeader[2].c_str());
+				
+				getline(regis,line);
+				HeaderSize = regis.tellg();
+				regis.close();
+			}
+			cout<<"Ingrese el valor del campo que desea buscar:"<<endl;
+			cin>>buscar;
+			const char* b = buscar.c_str();
+			if(strcmp(b, "")==0){
+				cout<<"Ese no es un valor válido"<<endl;
+			}else{
+				for (int i = 0;i<Index.size();i++){
+					if (Index[i].getKey() == atoi(b)){
+						POSEncontrado = i;
+						break;
+					}
+				}
+			}
+
+			if (POSEncontrado != -1){
+				FILE* SearchFile = fopen(c,"r+");
+				fseek(SearchFile,(POSEncontrado*LongitudRegistro)+HeaderSize,SEEK_SET);
+				char RegisFind[LongitudRegistro];
+				fread(RegisFind,1,LongitudRegistro,SearchFile);
+				cout << RegisFind <<endl;
+			}
+
+		}	
 	}
 	//ugly hacks everyfuckingwhere

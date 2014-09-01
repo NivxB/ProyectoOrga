@@ -135,6 +135,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 							case 3:{
 								int selBuscar;
 								cout<<"-------------------------\n1. Indice\n2. Sin Indice\n"<<endl;
+								cin >> selBuscar;
 								switch(selBuscar){
 									case 1:{
 										BuscarRegistroIndice();
@@ -556,7 +557,9 @@ void quickSort(IndexClass* arr, int left, int right) {
 			SSNewAvail << Selection;
 			string SNewAvail = SSNewAvail.str();
 			//Selection = atoi(SNewAvail.c_str());
+			
 			Index.erase(Index.begin()+Selection);
+			
 			string NewAvail;
 			if (SNewAvail.size() < 2)
 				NewAvail = "0000"+SNewAvail;
@@ -727,6 +730,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 				char RegisFind[LongitudRegistro];
 				fread(RegisFind,1,LongitudRegistro,SearchFile);
 				cout << RegisFind <<endl;
+				fclose(SearchFile);
 			}
 
 		}	

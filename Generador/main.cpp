@@ -33,6 +33,11 @@ vector<string> split(const string &s, char delim) {
 
 int main(int argc, char* argv[]){
 	string file = workingFile();
+	string Index = "../Index"+file;
+	file = "../"+file;
+	srand (time(NULL));
+	cout << Index << endl;
+
 	const char * c = file.c_str();
 	if(strcmp(c,"NULL")==0){
 		cout<<"oyy vey schlomo mcShekels"<<endl;
@@ -42,7 +47,7 @@ int main(int argc, char* argv[]){
 		vector<vector<string> > Campos;
 		vector<string> buffer;
 		int FieldNum = 0;
-		stringstream StringOutFile;
+		
 		if(regis.is_open()){			
 			fstream fs;
 			string line;
@@ -58,9 +63,12 @@ int main(int argc, char* argv[]){
 			regis.close();
 		}
 
-		ofstream OutF;
+		ofstream OutF,IndexF;
 		OutF.open(c,ofstream::app);
+		IndexF.open(Index.c_str());
 		for(int i = 0 ;i<100;i++){
+			stringstream StringOutFile;
+			
 			for (int j = 0; j<FieldNum;j++){
 				if (!strcmp(Campos[j][1].c_str(),"1")){
 					int Input = 0;
@@ -77,13 +85,19 @@ int main(int argc, char* argv[]){
 					int MOD = (pow(10.0,Long));
 					Input = rand() % MOD;
 					StringOutFile<< setw(Long) << setfill('0') << Input;
+
+					if (!strcmp(Campos[j][3].c_str(),"1")){
+						IndexF<<Input<<"\t"<<i<<"\n";
+					}
+
 				}
-			StringOutFile<<"|";
+				StringOutFile<<"|";
 			}
 			StringOutFile<<"\n";
 			OutF<<StringOutFile.str();
 		}
-
+		OutF.close();
+		IndexF.close();
 	}
 }
 
@@ -120,7 +134,5 @@ string workingFile(){
 	}else{
 		cout<<"No hay estructuras :( Cree una primero."<<endl;
 	}
-	string RetVal = "../"+line;
-	cout <<RetVal;
-	return RetVal;
+	return line;
 }

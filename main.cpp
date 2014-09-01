@@ -74,52 +74,32 @@
 		return buf;
 	}
 
-	void max_heapify(IndexClass *a, int i, int n)
-	{
-	    int j;
-	    IndexClass temp;
-	    temp = a[i];
-	    j = 2*i;
-	    while (j <= n)
-	    {
-	        if (j < n && a[j+1] > a[j])
-	            j = j+1;
-	        if (temp > a[j])
-	            break;
-	        else if (temp <= a[j])
-	        {
-	            a[j/2] = a[j];
-	            j = 2*j;
-	        }
-	    }
-	    a[j/2] = temp;
-	    return;
-	}
-
-
-	void build_maxheap(IndexClass *a, int n)
-	{
-	    int i;
-	    for(i = n/2; i >= 1; i--)
-	    {
-	        max_heapify(a, i, n);
-	    }
-	}
-
-	void heapsort(IndexClass *a, int n)
-	{
-		build_maxheap(a,n);
-	    int i;
-	    IndexClass temp;
-	    for (i = n; i >= 2; i--)
-	    {
-	        temp = a[i];
-	        a[i] = a[1];
-	        a[1] = temp;
-	        max_heapify(a, 1, i - 1);
-	    }
-	}
-
+void quickSort(IndexClass* arr, int left, int right) {
+      int i = left, j = right;
+      IndexClass tmp;
+      IndexClass pivot = arr[(left + right) / 2];
+ 
+      /* partition */
+      while (i <= j) {
+            while (arr[i] < pivot)
+                  i++;
+            while (arr[j] > pivot)
+                  j--;
+            if (i <= j) {
+                  tmp = arr[i];
+                  arr[i] = arr[j];
+                  arr[j] = tmp;
+                  i++;
+                  j--;
+            }
+      };
+ 
+      /* recursion */
+      if (left < j)
+            quickSort(arr, left, j);
+      if (i < right)
+            quickSort(arr, i, right);
+}
 	int main(int argc, char* argv[]){
 		bool cont = true;
 
@@ -351,7 +331,7 @@
 			if(regis.is_open()){
 				stringstream StringOutFile;
 
-				string NewAvail = "0-1";
+				string NewAvail = "000-1";
 				fstream fs;
 				FILE* OutAvail;
 				string line;
@@ -359,7 +339,7 @@
 				Header1 = split(line,'$');
 				const char * CAvailList = Header1.at(0).c_str();
 				bool Avail = false;
-				if (strcmp(CAvailList,"0-1"))
+				if (strcmp(CAvailList,"000-1"))
 					Avail = true;
 				const char * CNumeroCampos = Header1.at(1).c_str();
 				int LongitudRegistro = atoi(Header1.at(2).c_str());
@@ -439,11 +419,10 @@
 								}else if(enterInt<1){
 									cout<<"Ha ingresado un entero negativo. Por gavor solo ingrese valores positivos"<<endl;
 								}else{
-									NewIndexL.setKey(enterInt);
-									if (Avail){
-										if(strcmp(Campos[i][3].c_str(),"1")){
-											NewIndexL.setRRN(AvailNum);
-										}
+									cout << Campos[i][3] << endl;
+									if(!strcmp(Campos[i][3].c_str(),"1")){
+										NewIndexL.setKey(enterInt);
+										//cout << "Key Set " << enterInt << endl;
 									}
 									break;
 								}
@@ -474,6 +453,8 @@
 					int NewRRN = ((Pos - HeaderSize)/LongitudRegistro)-1;
 					NewIndexL.setRRN(NewRRN);
 
+					//cout <<"Set RRN "<<NewRRN<<endl;
+
 					fs.close();
 				}else{
 					NewIndexL.setRRN(AvailNum);
@@ -494,7 +475,7 @@
 					fclose(OutAvail);
 				}
 				Index.push_back(NewIndexL);
-				heapsort(&Index[0],Index.size());
+				quickSort(&Index[0],0,Index.size()-1);
 
 				string IndexW = "Index"+file;
 				ofstream NewIndex(IndexW.c_str());
@@ -543,20 +524,13 @@
 
 			string ReadLine;
 			int i = 0,Regis=0;
-			vector<vector<string> > Registros;
+			vector<int> Registros;
 			while(getline(regis,ReadLine)){
-				string numstr; // enough to hold all numbers up to 64-bits
-				//snprintf(numstr, sizeof(numstr), "%d", i);
-				numstr = itoa(i, 10);
-				
-				//cout<<numstr[0]<<numstr[1]<<numstr[2]<<numstr[3]<<numstr[4]<<endl;
-				
-				ReadLine += numstr;
-				
-				vector<string> buffer = split(ReadLine,'|');
+				vector<string> buffer;
+				buffer = (split(ReadLine,'|'));
 				const char * css = buffer.at(0).c_str();
 				if (ReadLine[0] != '*'){
-					Registros.push_back(buffer);
+					Registros.push_back(i);
 					cout<<Regis<<")\t";
 					for (int j = 0;j<buffer.size()-1;j++)
 						cout<<buffer[j]<<"\t";
@@ -575,10 +549,14 @@
 			cout<<"Ingrese registro a eliminar"<<endl;
 			cin>>Selection;//validar
 			
-			Index.erase(Index.begin()+Selection);
+			
 
-			string SNewAvail = Registros.at(Selection).back();
-			Selection = atoi(SNewAvail.c_str());
+			Selection = Registros[Selection];
+			stringstream SSNewAvail;
+			SSNewAvail << Selection;
+			string SNewAvail = SSNewAvail.str();
+			//Selection = atoi(SNewAvail.c_str());
+			Index.erase(Index.begin()+Selection);
 			string NewAvail;
 			if (SNewAvail.size() < 2)
 				NewAvail = "0000"+SNewAvail;

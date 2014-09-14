@@ -64,9 +64,9 @@ int main(int argc, char* argv[]){
 		}
 
 		ofstream OutF,IndexF;
-		OutF.open(c,ofstream::app);
+		OutF.open(c);
 		IndexF.open(Index.c_str());
-		for(int i = 0 ;i<100;i++){
+		for(int i = 0 ;i<10000;i++){
 			stringstream StringOutFile;
 			
 			for (int j = 0; j<FieldNum;j++){

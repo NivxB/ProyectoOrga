@@ -24,6 +24,8 @@
 	void ListarRegistros();
 	void buscarRegistro();
 	void BuscarRegistroIndice();
+	void GenerarDatos();
+	void Reindexar();
 
 	vector<IndexClass> Index;
 
@@ -105,7 +107,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 		while(cont){
 			int sel;
-			cout<<"-------------------------\n1. Crear nueva estructura\n2. Ver registros en estructura\n3. Modificar\n4. Registros\n5. Salir"<<endl;
+			cout<<"-------------------------\n1. Crear nueva estructura\n2. Ver registros en estructura\n3. Modificar\n4. Registros\n5. Reindexar\n6. Generar Datos\n7. Salir"<<endl;
 			cin>>sel;//validar sel
 
 			switch(sel){
@@ -162,6 +164,16 @@ void quickSort(IndexClass* arr, int left, int right) {
 					break;
 				}
 				case 5:{
+					Reindexar();
+					break;
+				}
+				case 6:{
+					cout << "Generando 10,000 registros..." << endl;
+					GenerarDatos();
+					cout << "Finalizado" << endl;
+					break;
+				}
+				case 7:{
 					cont = false;
 					break;
 				}
@@ -502,6 +514,8 @@ void quickSort(IndexClass* arr, int left, int right) {
 			string AvailList = "000-1";
 			int LongitudRegistro = 0;
 			
+			vector<IndexClass> ActualIndex;
+
 			if(regis.is_open()){
 				cout<< "ini " << regis.tellg()<<endl;
 			
@@ -518,6 +532,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 				vector<string> tempEstructura = split(line,'$');
 				for (int i = 0; i<tempEstructura.size();i++){
 					vector<string> buffer = split(tempEstructura.at(i),'|');
+
 				}
 
 				HeaderSize = regis.tellg();
@@ -734,5 +749,126 @@ void quickSort(IndexClass* arr, int left, int right) {
 			}
 
 		}	
+	}
+
+	void GenerarDatos(){
+		string file = workingFile();
+		srand (time(NULL));
+
+		const char * c = file.c_str();
+		if(strcmp(c,"NULL")==0){
+			cout<<"oyy vey schlomo mcShekels"<<endl;
+		}else{
+			ifstream regis(c);
+			vector<string> Header1;
+			vector<vector<string> > Campos;
+			vector<string> buffer;
+			int FieldNum = 0;
+			
+			if(regis.is_open()){			
+				fstream fs;
+				string line;
+				getline(regis, line);
+				Header1 = split(line,'$');
+				FieldNum = atoi(Header1[1].c_str());
+				getline(regis,line);
+				vector<string> tempCampos = split(line,'$');
+				for (int i = 0; i<tempCampos.size();i++){
+					buffer = split(tempCampos.at(i),'|');
+					Campos.push_back(buffer);
+				}			
+				regis.close();
+			}
+
+			ofstream OutF;
+			OutF.open(c,ofstream::app);
+			for(int i = 0 ;i<10000;i++){
+				stringstream StringOutFile;
+				
+				for (int j = 0; j<FieldNum;j++){
+					if (!strcmp(Campos[j][1].c_str(),"1")){
+						int Input = 0;
+						int Long = atoi(Campos[j][2].c_str());
+						for (int k = 0 ;k<Long;k++){
+							Input = rand() % 94 + 32;
+							if (Input == 124)
+								Input--;
+							StringOutFile<< (char)Input;
+						}
+					}else if (!strcmp(Campos[j][1].c_str(),"2")){
+						int Input = 0;
+						int Long = atoi(Campos[j][2].c_str());
+						int MOD = (pow(10.0,Long));
+						Input = rand() % MOD;
+						StringOutFile<< setw(Long) << setfill('0') << Input;
+
+						if (!strcmp(Campos[j][3].c_str(),"1")){
+							Index.push_back(IndexClass(Input,i));
+						}
+
+					}
+					StringOutFile<<"|";
+				}
+				StringOutFile<<"\n";
+				OutF<<StringOutFile.str();
+			}
+			OutF.close();
+			quickSort(&Index[0],0,Index.size()-1);
+
+			string IndexW = "Index"+file;
+			ofstream NewIndex(IndexW.c_str());
+			for (int i = 0;i<Index.size();i++)
+				NewIndex<<Index[i].getKey()<<"\t"<<Index[i].getRRN()<<"\n";
+		}		
+	}
+
+	void Reindexar(){
+		string file = workingFile();
+		Index.clear();
+		ifstream regis;
+		const char * c = file.c_str();
+
+		int KeyCampo = -1;
+		if(strcmp(c,"NULL")==0){
+			cout<<"oyy vey schlomo mcShekels"<<endl;
+		}else{
+			regis.open(c);
+			vector<vector<string> > Campos;
+			string line;
+			
+			if(regis.is_open()){
+				getline(regis, line);
+				getline(regis,line);
+				vector<string> tempCampos = split(line,'$');
+				for (int i = 0; i<tempCampos.size();i++){
+					vector<string> buffer = split(tempCampos.at(i),'|');
+					Campos.push_back(buffer);
+				}			
+			}
+
+			for (int i = 0 ; i< Campos.size() ; i++){
+				if (!strcmp(Campos[i][3].c_str(),"1")){
+					KeyCampo = i;
+					break;
+				}
+			}
+
+			int RRN = 0;
+			while(getline(regis,line)){
+				if (!(line[0] == '*')){
+					vector<string> buffer = split(line,'|');
+					Index.push_back(IndexClass(atoi(buffer[KeyCampo].c_str()),RRN));
+				}
+				RRN++;
+			}
+
+			regis.close();
+			quickSort(&Index[0],0,Index.size()-1);
+
+			string IndexW = "Index"+file;
+			ofstream NewIndex(IndexW.c_str());
+			for (int i = 0;i<Index.size();i++)
+				NewIndex<<Index[i].getKey()<<"\t"<<Index[i].getRRN()<<"\n";
+		}
 	}
 	//ugly hacks everyfuckingwhere

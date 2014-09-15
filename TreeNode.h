@@ -1,16 +1,19 @@
 #ifndef TREENODE_H
 #define TREENODE_H
 #include <iostream>
-#include "IndexClass.h"
+//#include "IndexClass.h"
 using namespace std;
 
 class TreeNode{
 public:
-	TreeNode(int, bool);//orden, es hoja
+	TreeNode(int, bool);//orden, es hoja, numero pagina
 	TreeNode();
+    void insertNonFull(int);
+    void splitChild(int, TreeNode *);
 	void recorrerInorden();
 	TreeNode* buscar(int);//key por buscar
     void insertar(int);
+    int encontrarKey(int k);
     void split(int, TreeNode *);
     void remove(int);
     void removeFromLeaf(int);
@@ -26,7 +29,9 @@ private:
 	int degree;
 	bool esHoja;
 	int nKeys;
-	IndexClass* llaves;
+	int PageNum;
+	//IndexClass* llaves;
+	int* llaves;
 	TreeNode** hijos;
 
 	friend class Tree;

@@ -13,6 +13,7 @@
 	#include <algorithm>
 	#include "campo.h"
 	#include "IndexClass.h"
+	#include "Tree.h"
 
 	using namespace std;//ayy lmao
 
@@ -28,6 +29,7 @@
 	void Reindexar();
 
 	vector<IndexClass> Index;
+	Tree BTree(64);
 
 	vector<string> &split(const string &s, char delim, vector<string> &elems) {
 	    stringstream ss(s);
@@ -231,6 +233,28 @@ void quickSort(IndexClass* arr, int left, int right) {
 			}
 		}
 
+
+		string BTreeFile = "BTree"+line;
+		ifstream BTreeF(BTreeFile.c_str());
+
+		// Suponiendo que la primera linea siempre sea la root
+
+		if (BTreeF.is_open()){
+			string Line;
+			getline(BTreeF,Line);
+			/*
+			Estructura ?
+			#Keys \t Key1|Key2|Key3 \t Pagina1|Pagina2|Pagina3
+			*/
+			vector<string> buffer = split(Line,'\t');
+			vector<string> Keys = split(buffer[1],'|');
+			vector<string> Pages = split(buffer[2],'|');
+
+			for (int i = 0 ; i<Keys.size() ; i++)
+				BTree.insertar(atoi(Keys[i].c_str()));
+
+		}
+
 		return line;
 	}
 
@@ -377,14 +401,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 				if (!Avail){
 					fs.open(c, fstream::out|fstream::app);
 				}else{
-					//char NewAvail[3];
 					OutAvail = fopen(c,"r+");
-					//fseek(OutAvail,(AvailNum*LongitudRegistro)+HeaderSize,SEEK_SET);
-					//fgetc(OutAvail);
-					//for(int i = 0 ; i < 3 ; i++)
-					//	NewAvail[i] = fgetc(OutAvail);
-					//fseek(OutAvail,0,SEEK_SET);
-					//fputs(NewAvail,OutAvail);
 				}
 
 				for(int i=0;i<Campos.size();i++){//to do: validar no meter valores repetidos si es llave
@@ -435,7 +452,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 									cout << Campos[i][3] << endl;
 									if(!strcmp(Campos[i][3].c_str(),"1")){
 										NewIndexL.setKey(enterInt);
-										//cout << "Key Set " << enterInt << endl;
+										BTree.insertar(enterInt);
 									}
 									break;
 								}
@@ -494,6 +511,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 				ofstream NewIndex(IndexW.c_str());
 				for (int i = 0;i<Index.size();i++)
 					NewIndex<<Index[i].getKey()<<"\t"<<Index[i].getRRN()<<"\n";
+
 
 			}else{
 				cout<<"Error abriendo la estructura"<<endl;
@@ -573,8 +591,10 @@ void quickSort(IndexClass* arr, int left, int right) {
 			string SNewAvail = SSNewAvail.str();
 			//Selection = atoi(SNewAvail.c_str());
 			
-			Index.erase(Index.begin()+Selection);
 			
+			//Index.erase(KEY);
+			//BTree.remove(KEY)
+
 			string NewAvail;
 			if (SNewAvail.size() < 2)
 				NewAvail = "0000"+SNewAvail;

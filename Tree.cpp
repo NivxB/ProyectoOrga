@@ -1,11 +1,11 @@
 #include "Tree.h"
 
 Tree::Tree(int d){
-	root = NULL;  
-	degree = d; 
+	root = NULL;
+	degree = d;
 }
 
-void Tree::recorrerInorden(){  
+void Tree::recorrerInorden(){
 	if(root != NULL){
 		root->recorrerInorden();
 	}
@@ -28,7 +28,7 @@ void Tree::insertar(int k){
             TreeNode *s = new TreeNode(degree, false);
             s->hijos[0] = root;
             s->split(0, root);
- 
+
             int i = 0;
             if (s->llaves[0] < k){
                 i++;
@@ -46,9 +46,9 @@ void Tree::remove(int k){
         cout << "El árbol está vacío\n";
         return;
     }
- 
+
     root->remove(k);
- 
+
     if (root->nKeys==0){
         TreeNode *tmp = root;
         if (root->esHoja)

@@ -11,7 +11,10 @@ public:
     void recorrerInorden(); 
     TreeNode* buscar(int);
     void insertar(int);
+    void clear();
     void remove(int);
+    TreeNode* getRoot();
+    void write(ostream&);
 };
 
 #endif

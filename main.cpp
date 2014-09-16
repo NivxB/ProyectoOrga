@@ -29,7 +29,7 @@
 	void Reindexar();
 
 	vector<IndexClass> Index;
-	Tree BTree(64);
+	Tree BTree(32);
 
 	vector<string> &split(const string &s, char delim, vector<string> &elems) {
 	    stringstream ss(s);
@@ -233,6 +233,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 			}
 		}
 
+		BTree.clear();
 
 		string BTreeFile = "BTree"+line;
 		ifstream BTreeF(BTreeFile.c_str());
@@ -241,18 +242,21 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 		if (BTreeF.is_open()){
 			string Line;
-			getline(BTreeF,Line);
-			/*
-			Estructura ?
-			#Keys \t Key1|Key2|Key3 \t Pagina1|Pagina2|Pagina3
-			*/
-			vector<string> buffer = split(Line,'\t');
-			vector<string> Keys = split(buffer[1],'|');
-			vector<string> Pages = split(buffer[2],'|');
+			while (getline(BTreeF,Line)){
+				/*
+				Estructura ?
+				#Keys \t Key1|Key2|Key3 \t Pagina1|Pagina2|Pagina3
+				*/
+				//vector<string> buffer = split(Line,'\t');
+				//vector<string> Keys = split(line,'|');
+				//cout<<"NK "<< Keys[1] << endl;
+				//vector<string> Pages = split(buffer[2],'|');
 
-			for (int i = 0 ; i<Keys.size() ; i++)
-				BTree.insertar(atoi(Keys[i].c_str()));
+				//for (int i = 0 ; i<Keys.size() ; i++)
+					BTree.insertar(atoi(Line.c_str()));
+			}
 
+			//BTree.recorrerInorden();
 		}
 
 		return line;
@@ -298,6 +302,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 		fileName+=".dat";
 		string IndexFile = "Index"+fileName;
+		string ArbolFile = "BTree"+fileName;
 
 		const char * c = fileName.c_str();
 
@@ -305,6 +310,9 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 		ofstream IndexEstruc(IndexFile.c_str());
 		IndexEstruc.close();
+
+		ofstream AFile(ArbolFile.c_str());
+		AFile.close();
 
 		if(estruc.is_open()){
 			estruc<<"000-1$"<<campos.size()<<"$"<<LongitudRegistro<<"$\n";
@@ -507,11 +515,18 @@ void quickSort(IndexClass* arr, int left, int right) {
 				Index.push_back(NewIndexL);
 				quickSort(&Index[0],0,Index.size()-1);
 
+
+				//Reescribiendo Indice
 				string IndexW = "Index"+file;
 				ofstream NewIndex(IndexW.c_str());
 				for (int i = 0;i<Index.size();i++)
 					NewIndex<<Index[i].getKey()<<"\t"<<Index[i].getRRN()<<"\n";
 
+				//Reescribiendo Arbol
+				string ArbolW = "BTree"+file;
+				ofstream NewArbol(ArbolW.c_str());
+				BTree.write(NewArbol);
+				NewArbol.close();
 
 			}else{
 				cout<<"Error abriendo la estructura"<<endl;
@@ -824,6 +839,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 						if (!strcmp(Campos[j][3].c_str(),"1")){
 							Index.push_back(IndexClass(Input,i));
+							BTree.insertar(Input);
 						}
 
 					}
@@ -839,6 +855,11 @@ void quickSort(IndexClass* arr, int left, int right) {
 			ofstream NewIndex(IndexW.c_str());
 			for (int i = 0;i<Index.size();i++)
 				NewIndex<<Index[i].getKey()<<"\t"<<Index[i].getRRN()<<"\n";
+
+			string AFile = "BTree"+file;
+			ofstream NewArbol(AFile.c_str());
+			BTree.write(NewArbol);
+
 		}		
 	}
 

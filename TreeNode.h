@@ -24,6 +24,8 @@ public:
     void borrowFromPrev(int);
     void borrowFromNext(int);
     void merge(int);
+    void clear();
+    void write(ostream&);
 	~TreeNode();
 private:
 	int degree;

@@ -17,6 +17,32 @@ TreeNode::~TreeNode(){
 
 }
 
+void TreeNode::clear(){
+    delete[] llaves;
+    nKeys = 0;
+    llaves = NULL;
+    for (int i = 0 ;i<nKeys;i++)
+        hijos[i]->clear();
+    delete[] hijos;
+    hijos = NULL;
+}
+
+void TreeNode::write(ostream& out){
+
+    int i;
+    for (i=0; i<nKeys; i++){
+        if (!esHoja){
+            hijos[i]->write(out);
+        }
+        out<<llaves[i]<<'\n';
+    }
+
+    if (!esHoja){
+        hijos[i]->write(out);
+    }
+
+}
+
 void TreeNode::recorrerInorden(){
 	int i;
     for (i=0; i<nKeys; i++){

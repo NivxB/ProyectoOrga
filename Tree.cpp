@@ -5,6 +5,23 @@ Tree::Tree(int d){
 	degree = d;
 }
 
+TreeNode* Tree::getRoot(){
+    return root;
+}
+
+void Tree::clear(){
+    if (root){
+        root -> clear();
+        delete root;
+    }
+}
+
+void Tree::write(ostream& out){
+    if (root){
+        root -> write(out);
+    }
+}
+
 void Tree::recorrerInorden(){
 	if(root != NULL){
 		root->recorrerInorden();

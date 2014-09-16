@@ -28,6 +28,8 @@
 	void GenerarDatos();
 	void Reindexar();
 
+	int binary_search(IndexClass[],int ,int , IndexClass ,int );
+
 	vector<IndexClass> Index;
 	Tree BTree(32);
 
@@ -536,6 +538,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 	void DeleteRegistro(){
 		string file = workingFile();
+		int KeyCampo = 0;
 		const char * c = file.c_str();
 		if(strcmp(c,"NULL")==0){
 			cout<<"oyy vey schlomo mcShekels"<<endl;
@@ -554,18 +557,21 @@ void quickSort(IndexClass* arr, int left, int right) {
 			
 				string line;
 				getline(regis, line);
-				cout<< "1 " << regis.tellg()<<endl;
+				//cout<< "1 " << regis.tellg()<<endl;
 				vector<string> tempHeader = split(line,'$');
 				AvailList = tempHeader[0];
 
 				LongitudRegistro = atoi(tempHeader[2].c_str());
 				getline(regis,line);
-				cout<< "2 " << regis.tellg()<<endl;
+				//cout<< "2 " << regis.tellg()<<endl;
 
 				vector<string> tempEstructura = split(line,'$');
 				for (int i = 0; i<tempEstructura.size();i++){
 					vector<string> buffer = split(tempEstructura.at(i),'|');
-
+					if (!strcmp(buffer[3].c_str(),"1")){
+						KeyCampo = i;
+						break;
+					}
 				}
 
 				HeaderSize = regis.tellg();
@@ -577,12 +583,13 @@ void quickSort(IndexClass* arr, int left, int right) {
 			while(getline(regis,ReadLine)){
 				vector<string> buffer;
 				buffer = (split(ReadLine,'|'));
-				const char * css = buffer.at(0).c_str();
+				//const char * css = buffer.at(0).c_str();
 				if (ReadLine[0] != '*'){
 					Registros.push_back(i);
 					cout<<Regis<<")\t";
-					for (int j = 0;j<buffer.size()-1;j++)
+					for (int j = 0;j<buffer.size();j++){
 						cout<<buffer[j]<<"\t";
+					}
 
 					cout<<"\n";
 					Regis++;
@@ -601,6 +608,15 @@ void quickSort(IndexClass* arr, int left, int right) {
 			
 
 			Selection = Registros[Selection];
+
+			int POSEncontrado = binary_search(&Index[0],0,Index.size(),IndexClass(-1,Selection),0);
+
+			int KeyEliminar = Index[POSEncontrado].getKey();
+
+
+			BTree.remove(Index[KeyEliminar].getKey());
+			Index.erase(Index.begin() + KeyEliminar);
+
 			stringstream SSNewAvail;
 			SSNewAvail << Selection;
 			string SNewAvail = SSNewAvail.str();
@@ -645,6 +661,11 @@ void quickSort(IndexClass* arr, int left, int right) {
 			for (int i = 0;i<Index.size();i++)
 				NewIndex<<Index[i].getKey()<<"\t"<<Index[i].getRRN()<<"\n";
 			
+			string BTreeW = "BTree"+file;
+			ofstream NewBTree(BTreeW.c_str());
+			BTree.write(NewBTree);
+
+
 		}
 	}
 
@@ -766,12 +787,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 			if(strcmp(b, "")==0){
 				cout<<"Ese no es un valor válido"<<endl;
 			}else{
-				for (int i = 0;i<Index.size();i++){
-					if (Index[i].getKey() == atoi(b)){
-						POSEncontrado = i;
-						break;
-					}
-				}
+				POSEncontrado = binary_search(&Index[0],0,Index.size(),IndexClass(atoi(b),-1),1);
 			}
 
 			if (POSEncontrado != -1){
@@ -912,4 +928,37 @@ void quickSort(IndexClass* arr, int left, int right) {
 				NewIndex<<Index[i].getKey()<<"\t"<<Index[i].getRRN()<<"\n";
 		}
 	}
+
+	int binary_search(IndexClass array[],int first,int last, IndexClass search_key,int TYPE) // 1 - KEY 0 - RRN
+	{
+		int index;
+		if (TYPE == 1){
+			if (first > last)
+				index = -1;
+			else{
+				int mid = (first + last)/2;
+			 	if (search_key == array[mid])
+			 		index = mid;
+			 	else
+					if (search_key < array[mid])
+			 			index = binary_search(array,first, mid-1, search_key,TYPE);
+					else
+						index = binary_search(array, mid+1, last, search_key,TYPE);
+			} // end if
+		}else{
+			if (first > last)
+				index = -1;
+			else{
+				int mid = (first + last)/2;
+			 	if (search_key.EqualRRN(array[mid]))
+			 		index = mid;
+			 	else
+					if (search_key.LessThanRRN(array[mid]))
+			 			index = binary_search(array,first, mid-1, search_key,TYPE);
+					else
+						index = binary_search(array, mid+1, last, search_key,TYPE);
+			} // end if
+		}
+		return index;
+	}// end binarySearch
 	//ugly hacks everyfuckingwhere

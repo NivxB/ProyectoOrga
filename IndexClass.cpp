@@ -49,3 +49,39 @@ bool IndexClass::operator>=(const IndexClass& Compare){
 		return true;
 	return false;
 }
+
+bool IndexClass::operator==(const IndexClass& Compare){
+	if (Key == Compare.Key)
+		return true;
+	return false;
+}
+
+bool IndexClass::LessThanRRN(const IndexClass& Compare){
+	if (RRN < Compare.RRN)
+		return true;
+	return false;
+}
+
+bool IndexClass::GreatherThanRRN(const IndexClass& Compare){
+	if (RRN > Compare.RRN)
+		return true;
+	return false;
+}
+
+bool IndexClass::LessThanEqRRN(const IndexClass& Compare){
+	if (RRN <= Compare.RRN)
+		return true;
+	return false;
+}
+
+bool IndexClass::GreatherThanEqRRN(const IndexClass& Compare){
+	if (RRN >= Compare.RRN)
+		return true;
+	return false;
+}		
+
+bool IndexClass::EqualRRN(const IndexClass& Compare){ 
+	if (RRN == Compare.RRN)
+		return true;
+	return false;
+}

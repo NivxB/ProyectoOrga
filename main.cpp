@@ -27,6 +27,8 @@
 	void BuscarRegistroIndice();
 	void GenerarDatos();
 	void Reindexar();
+	int validarEntradaInt();
+	int validarEntradaInt(int opc);
 
 	int binary_search(IndexClass[],int ,int , IndexClass ,int );
 
@@ -272,22 +274,22 @@ void quickSort(IndexClass* arr, int left, int right) {
 		cout<<"Ingrese el nombre de la estructura:"<<endl;
 		cin>>fileName;//validar que no exista otro con el mismo nombre(?)
 		cout<<"¿Cuántos campos?:"<<endl;
-		cin>>fieldNumber;
+		fieldNumber = validarEntradaInt();//numero de campos
 		LongitudRegistro += fieldNumber+1;
 		vector<campo> campos;
 
 		for(int i=0;i<fieldNumber;i++){
 			string fieldName;
-			int fieldT, fieldS, isKey=0;
+			int isKey=0;
 			char k;
 			cout<<"Ingrese el nombre del campo "<<(i+1)<<endl;//validar que no hayan otros con el mismo nombre
 			cin>>fieldName;
 			cout<<"Ingrese el tipo:\n1: Caracter\n2: Entero\n3: Real"<<endl;//to do: real, validar
-			cin>>fieldT;
+			int fieldT = validarEntradaInt(3);
 			cout<<"Ingrese el tamaño:"<<endl;//validar
-			cin>>fieldS;
+			int fieldS = validarEntradaInt(200);
 			LongitudRegistro+=fieldS;
-			if(!thereIsKey){
+			if(!thereIsKey&&fieldT==2){
 			cout<<"¿Es llave primaria? (s/n)"<<endl;
 			cin>>k;
 			if(k=='s'){
@@ -453,7 +455,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 							}
 						}else if(tipo==2){//int
 							while(true){
-								cin>>enterInt;
+								enterInt = validarEntradaInt();
 								if(enterInt>=(pow(10, size))){
 									cout<<"Ha ingresado un entero de mayor tamaño. Por favor ingrese un entero de tamaño "<<size<<" o menor."<<endl;
 								}else if(enterInt<1){
@@ -461,8 +463,14 @@ void quickSort(IndexClass* arr, int left, int right) {
 								}else{
 									cout << Campos[i][3] << endl;
 									if(!strcmp(Campos[i][3].c_str(),"1")){
-										NewIndexL.setKey(enterInt);
-										BTree.insertar(enterInt);
+										int dontWrite = binary_search(&Index[0],0,Index.size(),IndexClass(enterInt,-1),1); 
+										if(dontWrite != -1){
+											cout<<"La llave primaria ya se encuentra"<<endl;
+											i=Campos.size();
+										}else{
+											NewIndexL.setKey(enterInt);
+											BTree.insertar(enterInt);
+										}
 									}
 									break;
 								}
@@ -847,10 +855,13 @@ void quickSort(IndexClass* arr, int left, int right) {
 							StringOutFile<< (char)Input;
 						}
 					}else if (!strcmp(Campos[j][1].c_str(),"2")){
-						int Input = 0;
+						int Input = -1,Encontrado = -1;
 						int Long = atoi(Campos[j][2].c_str());
 						int MOD = (pow(10.0,Long));
-						Input = rand() % MOD;
+						while (Encontrado == -1){
+							Input = rand() % MOD;
+							Encontrado = binary_search(&Index[0],0,Index.size(),IndexClass(Input,-1),1);
+						}
 						StringOutFile<< setw(Long) << setfill('0') << Input;
 
 						if (!strcmp(Campos[j][3].c_str(),"1")){
@@ -931,7 +942,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 	int binary_search(IndexClass array[],int first,int last, IndexClass search_key,int TYPE) // 1 - KEY 0 - RRN
 	{
-		int index;
+		int index = -1;
 		if (TYPE == 1){
 			if (first > last)
 				index = -1;
@@ -961,4 +972,29 @@ void quickSort(IndexClass* arr, int left, int right) {
 		}
 		return index;
 	}// end binarySearch
+
+	int validarEntradaInt(){
+		string input;
+		cin>>input;
+		const char * c = input.c_str();
+		return atoi(c);
+	}
+
+	int validarEntradaInt(int opc){//bound superior
+		string input;
+		bool cont=true;
+		const char * c;	
+		
+		while(cont){
+			cin>>input;
+			c = input.c_str();
+
+			if(atoi(c)>opc||atoi(c)==0){
+				cout<<"Por favor ingrese un valor válido"<<endl;
+			}else{
+				cont = false;
+			}
+		}
+		return atoi(c);
+	}
 	//ugly hacks everyfuckingwhere

@@ -18,6 +18,7 @@
 	using namespace std;//ayy lmao
 
 	string workingFile();
+	void Compactar();
 	void createStructure();
 	void imprimirEstructura(vector<campo>);
 	void AddRegistro();
@@ -25,15 +26,19 @@
 	void ListarRegistros();
 	void buscarRegistro();
 	void BuscarRegistroIndice();
+	void buscarRegistroArbol();
 	void GenerarDatos();
 	void Reindexar();
+	void cruzarIndices();
+	void cruzarArboles();
 	int validarEntradaInt();
 	int validarEntradaInt(int opc);
+	void LoadTree(string FileName,Tree*);
 
 	int binary_search(IndexClass[],int ,int , IndexClass ,int );
 
 	vector<IndexClass> Index;
-	Tree BTree(32);
+	//Tree BTree(32);
 
 	vector<string> &split(const string &s, char delim, vector<string> &elems) {
 	    stringstream ss(s);
@@ -113,7 +118,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 		while(cont){
 			int sel;
-			cout<<"-------------------------\n1. Crear nueva estructura\n2. Ver registros en estructura\n3. Modificar\n4. Registros\n5. Reindexar\n6. Generar Datos\n7. Salir"<<endl;
+			cout<<"-------------------------\n1. Crear nueva estructura\n2. Ver registros en estructura\n3. Modificar\n4. Registros\n5. Reindexar\n6. Cruzar\n7. Generar Datos\n8. Compactar\n9. Salir"<<endl;
 			cin>>sel;//validar sel
 
 			switch(sel){
@@ -173,14 +178,34 @@ void quickSort(IndexClass* arr, int left, int right) {
 					Reindexar();
 					break;
 				}
-				case 6:{
+				case 7:{
 					cout << "Generando 10,000 registros..." << endl;
 					GenerarDatos();
 					cout << "Finalizado" << endl;
 					break;
 				}
-				case 7:{
+				case 9:{
 					cont = false;
+					break;
+				}
+				case 8:{
+					Compactar();
+					break;
+				}
+				case 6:{
+					int selBuscar;
+					cout<<"-------------------------\n1. Indice\n2. Arbol\n"<<endl;
+					cin >> selBuscar;
+					switch(selBuscar){
+						case 1:{
+							cruzarIndices();
+							break;
+						}
+						case 2:{
+							cruzarArboles();
+							break;
+						}
+					}
 					break;
 				}
 				default:
@@ -192,12 +217,14 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 	string workingFile(){
 		int nLines = 0;
+		vector<string> Estructura ;
 		ifstream estruc("estructuras.dat");
 		string line = "NULL";
 		if(estruc.is_open()){
 			while(getline(estruc,line)){
 				nLines++;
 	    		cout<<nLines<<'\t'<<line<<'\n';
+	    		Estructura.push_back(line);
 	    	}    
 		}else{
 			cout<<"Error al abrir el archivo estructuras.dat"<<endl;
@@ -208,59 +235,22 @@ void quickSort(IndexClass* arr, int left, int right) {
 			cout<<"Ingrese el numero del archivo sobre el que desea trabajar: "<<endl;
 			int sel;
 			cin>>sel;//validar sel
-			int i=0;
+			
+			line = Estructura[sel - 1];
 
-			ifstream estruc2("estructuras.dat");//ni idea de por que falla si uso el mismo estruc de arriba
-			if(estruc2.is_open()){
-				while(i<nLines){
-					getline(estruc2, line);
-					i++;
+			string IndexFile = "Index"+line;
+			ifstream IndexW(IndexFile.c_str());
+			Index.clear();
+
+			if (IndexW.is_open()){
+				string Lines;
+				while(getline(IndexW,Lines)){
+					vector<string> SplitLine = split(Lines,'\t');
+					Index.push_back(IndexClass(atoi(SplitLine[0].c_str()),atoi(SplitLine[1].c_str())));
 				}
-	    	estruc2.close();
-			}else{
-				cout<<"Error al abrir el archivo estructuras.dat"<<endl;
 			}
 		}else{
 			cout<<"No hay estructuras :( Cree una primero."<<endl;
-		}
-
-
-		string IndexFile = "Index"+line;
-		ifstream IndexW(IndexFile.c_str());
-		Index.clear();
-
-		if (IndexW.is_open()){
-			string Lines;
-			while(getline(IndexW,Lines)){
-				vector<string> SplitLine = split(Lines,'\t');
-				Index.push_back(IndexClass(atoi(SplitLine[0].c_str()),atoi(SplitLine[1].c_str())));
-			}
-		}
-
-		BTree.clear();
-
-		string BTreeFile = "BTree"+line;
-		ifstream BTreeF(BTreeFile.c_str());
-
-		// Suponiendo que la primera linea siempre sea la root
-
-		if (BTreeF.is_open()){
-			string Line;
-			while (getline(BTreeF,Line)){
-				/*
-				Estructura ?
-				#Keys \t Key1|Key2|Key3 \t Pagina1|Pagina2|Pagina3
-				*/
-				//vector<string> buffer = split(Line,'\t');
-				//vector<string> Keys = split(line,'|');
-				//cout<<"NK "<< Keys[1] << endl;
-				//vector<string> Pages = split(buffer[2],'|');
-
-				//for (int i = 0 ; i<Keys.size() ; i++)
-					BTree.insertar(atoi(Line.c_str()));
-			}
-
-			//BTree.recorrerInorden();
 		}
 
 		return line;
@@ -360,6 +350,8 @@ void quickSort(IndexClass* arr, int left, int right) {
 	void AddRegistro(){
 		string file = workingFile();
 		IndexClass NewIndexL(0,0);
+		Tree BTree(32);
+		LoadTree(file,&BTree);
 		const char * c = file.c_str();
 		if(strcmp(c,"NULL")==0){
 			cout<<"oyy vey schlomo mcShekels"<<endl;
@@ -507,11 +499,12 @@ void quickSort(IndexClass* arr, int left, int right) {
 				}else{
 					NewIndexL.setRRN(AvailNum);
 
-					char NewAvail[5];
+					char NewAvail[6];
 					fseek(OutAvail,(AvailNum*LongitudRegistro)+HeaderSize,SEEK_SET);
 					fgetc(OutAvail);
 					for(int i = 0 ; i < 5 ; i++)
 						NewAvail[i] = fgetc(OutAvail);
+					NewAvail[6] = '$';
 					fseek(OutAvail,0,SEEK_SET);
 					fputs(NewAvail,OutAvail);
 
@@ -546,6 +539,8 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 	void DeleteRegistro(){
 		string file = workingFile();
+		Tree BTree(32);
+		LoadTree(file,&BTree);
 		int KeyCampo = 0;
 		const char * c = file.c_str();
 		if(strcmp(c,"NULL")==0){
@@ -814,6 +809,9 @@ void quickSort(IndexClass* arr, int left, int right) {
 		string file = workingFile();
 		srand (time(NULL));
 
+		Tree BTree(32);
+		LoadTree(file,&BTree);
+
 		const char * c = file.c_str();
 		if(strcmp(c,"NULL")==0){
 			cout<<"oyy vey schlomo mcShekels"<<endl;
@@ -841,11 +839,32 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 			ofstream OutF;
 			OutF.open(c,ofstream::app);
+
+			vector<vector<int> > vec;
+
+
+			for (int j = 0; j<FieldNum;j++){
+				if (!strcmp(Campos[j][1].c_str(),"2")){
+					int Long = atoi(Campos[j][2].c_str());
+					int MOD = (pow(10.0,Long));
+					
+					vector<int> v;
+					for(int i=0;i<10000;i++){
+						v.push_back(i%MOD);
+					}
+
+					random_shuffle(v.begin(),v.end());
+					vec.push_back(v);
+				}
+			}			
+
 			for(int i = 0 ;i<10000;i++){
 				stringstream StringOutFile;
+				int h=0;
 				
 				for (int j = 0; j<FieldNum;j++){
 					if (!strcmp(Campos[j][1].c_str(),"1")){
+						h++;
 						int Input = 0;
 						int Long = atoi(Campos[j][2].c_str());
 						for (int k = 0 ;k<Long;k++){
@@ -855,13 +874,14 @@ void quickSort(IndexClass* arr, int left, int right) {
 							StringOutFile<< (char)Input;
 						}
 					}else if (!strcmp(Campos[j][1].c_str(),"2")){
-						int Input = -1,Encontrado = -1;
+						int Input = 0;
 						int Long = atoi(Campos[j][2].c_str());
 						int MOD = (pow(10.0,Long));
-						while (Encontrado == -1){
-							Input = rand() % MOD;
-							Encontrado = binary_search(&Index[0],0,Index.size(),IndexClass(Input,-1),1);
-						}
+						//Input = rand() % MOD;
+						Input = vec.at(j-h).back();
+						
+						vec.at(j-h).pop_back();
+
 						StringOutFile<< setw(Long) << setfill('0') << Input;
 
 						if (!strcmp(Campos[j][3].c_str(),"1")){
@@ -886,7 +906,6 @@ void quickSort(IndexClass* arr, int left, int right) {
 			string AFile = "BTree"+file;
 			ofstream NewArbol(AFile.c_str());
 			BTree.write(NewArbol);
-
 		}		
 	}
 
@@ -943,11 +962,14 @@ void quickSort(IndexClass* arr, int left, int right) {
 	int binary_search(IndexClass array[],int first,int last, IndexClass search_key,int TYPE) // 1 - KEY 0 - RRN
 	{
 		int index = -1;
+		//cout << "FIS "<< first << endl;
+		//cout << "SEC "<< last << endl;
 		if (TYPE == 1){
 			if (first > last)
 				index = -1;
 			else{
 				int mid = (first + last)/2;
+				//cout << "MID "<< mid << endl;
 			 	if (search_key == array[mid])
 			 		index = mid;
 			 	else
@@ -996,5 +1018,206 @@ void quickSort(IndexClass* arr, int left, int right) {
 			}
 		}
 		return atoi(c);
+	}
+
+	void cruzarIndices(){
+		string file = workingFile();
+		vector<IndexClass> Index2;
+		for(int i=0;i<Index.size();i++){
+			Index2.push_back(Index.at(i));
+		}
+
+		string file2 = workingFile();
+
+		int encontrado=-1, encontrado2 = -1;
+		const char* c = file.c_str();
+		const char* c2 = file2.c_str();
+		ifstream regis(c);
+		ifstream regis2(c2);
+		int HeaderSize = 0;
+		int LongitudRegistro = 0;
+		int HeaderSize2 = 0;
+		int LongitudRegistro2 = 0;
+
+		if(regis.is_open()){
+				string line;
+				getline(regis, line);
+				vector<string> tempHeader = split(line,'$');
+				LongitudRegistro = atoi(tempHeader[2].c_str());
+
+				getline(regis,line);
+				HeaderSize = regis.tellg();
+				regis.close();
+		}
+
+
+		if(regis2.is_open()){
+				string line;
+				getline(regis2, line);
+				vector<string> tempHeader = split(line,'$');
+				LongitudRegistro2 = atoi(tempHeader[2].c_str());
+				
+				getline(regis2,line);
+				HeaderSize2 = regis2.tellg();
+				regis2.close();
+		}
+
+
+		for(int i=0;i<Index.size();i++){
+			encontrado2 = binary_search(&Index2[0],0,Index2.size(),Index.at(i),1);
+			//encontrado = binary_search(&Index[0],0,Index.size(),Index.at(i),1);
+
+			if (encontrado2 != -1){
+				
+				FILE* SearchFile = fopen(c,"r+");
+				fseek(SearchFile,(Index2[encontrado2].getRRN()*LongitudRegistro)+HeaderSize,SEEK_SET);
+				char RegisFind[LongitudRegistro];
+				fread(RegisFind,1,LongitudRegistro,SearchFile);
+
+				//RegisFind[LongitudRegistro - 1] = ' '
+
+				cout << RegisFind << "ESPACIO ";
+				fclose(SearchFile);
+				FILE* SearchFile2 = fopen(c2,"r+");
+				fseek(SearchFile2,(Index[i].getRRN()*LongitudRegistro2)+HeaderSize2,SEEK_SET);
+				char RegisFind2[LongitudRegistro2];
+				fread(RegisFind2,1,LongitudRegistro2,SearchFile2);
+				cout << RegisFind2<< endl;
+				fclose(SearchFile2);
+				encontrado2=-1;
+			}
+		}
+	}
+
+	void LoadTree(string FileName,Tree* BTree){
+		string BTreeFile = "BTree"+FileName;
+		ifstream BTreeF(BTreeFile.c_str());
+
+		// Suponiendo que la primera linea siempre sea la root
+
+		if (BTreeF.is_open()){
+			string Line;
+			while (getline(BTreeF,Line)){
+				/*
+				Estructura ?
+				#Keys \t Key1|Key2|Key3 \t Pagina1|Pagina2|Pagina3
+				*/
+				//vector<string> buffer = split(Line,'\t');
+				//vector<string> Keys = split(line,'|');
+				//cout<<"NK "<< Keys[1] << endl;
+				//vector<string> Pages = split(buffer[2],'|');
+
+				//for (int i = 0 ; i<Keys.size() ; i++)
+					BTree->insertar(atoi(Line.c_str()));
+			}
+		}
+	}
+
+	void cruzarArboles(){		
+		string file = workingFile();
+		vector<IndexClass> Index2;
+		for(int i=0;i<Index.size();i++){
+			Index2.push_back(Index.at(i));
+		}
+
+		string file2 = workingFile();
+
+		int encontrado=-1, encontrado2 = -1;
+		const char* c = file.c_str();
+		const char* c2 = file2.c_str();
+		ifstream regis(c);
+		ifstream regis2(c2);
+		int HeaderSize = 0;
+		int LongitudRegistro = 0;
+		int HeaderSize2 = 0;
+		int LongitudRegistro2 = 0;
+
+		if(regis.is_open()){
+				string line;
+				getline(regis, line);
+				vector<string> tempHeader = split(line,'$');
+				LongitudRegistro = atoi(tempHeader[2].c_str());
+				
+				getline(regis,line);
+				HeaderSize = regis.tellg();
+				regis.close();
+		}
+
+
+		if(regis2.is_open()){
+				string line;
+				getline(regis2, line);
+				vector<string> tempHeader = split(line,'$');
+				LongitudRegistro2 = atoi(tempHeader[2].c_str());
+				
+				getline(regis2,line);
+				HeaderSize2 = regis2.tellg();
+				regis2.close();
+		}
+
+
+		Tree BTree_1(32);
+		Tree BTree_2(32);
+
+		LoadTree(c,&BTree_1);
+		LoadTree(c2,&BTree_2);
+
+		for(int i=0;i<Index.size();i++){
+			
+			if (BTree_1.buscar(Index[i].getKey()) != NULL && BTree_2.buscar(Index[i].getKey()) != NULL){
+
+				encontrado2 = binary_search(&Index2[0],0,Index2.size(),Index.at(i),1);
+				//encontrado = binary_search(&Index[0],0,Index.size(),Index.at(i),1);
+
+				if (encontrado2 != -1){
+					
+					FILE* SearchFile = fopen(c,"r+");
+					fseek(SearchFile,(Index2[encontrado2].getRRN()*LongitudRegistro)+HeaderSize,SEEK_SET);
+					char RegisFind[LongitudRegistro];
+					fread(RegisFind,1,LongitudRegistro,SearchFile);
+					cout << RegisFind << " ESPACIO ";
+					fclose(SearchFile);
+					FILE* SearchFile2 = fopen(c2,"r+");
+					fseek(SearchFile2,(Index[i].getRRN()*LongitudRegistro2)+HeaderSize2,SEEK_SET);
+					char RegisFind2[LongitudRegistro2];
+					fread(RegisFind2,1,LongitudRegistro2,SearchFile2);
+					cout << RegisFind2<< endl;
+					fclose(SearchFile2);
+					encontrado2=-1;
+				}
+			}
+		}
+	}
+
+	void Compactar(){
+		string filename = workingFile();
+
+		int Success = rename(filename.c_str(),"OLD.dat");
+
+		ofstream estruc(filename.c_str());
+		ifstream oldfile("OLD.dat");
+		if (Success == 0){
+			string line;
+			getline(oldfile,line);
+			vector<string> buffer = split(line,'$');
+			estruc<<"000-1$"<<buffer[1]<<"$"<<buffer[2]<<"$\n";
+
+			getline(oldfile,line);
+			estruc<<line<<'\n';
+
+			while (getline(oldfile,line)){
+				if (line[0] != '*'){
+					estruc<<line<<'\n';
+				}
+			}
+
+			estruc.close();
+			oldfile.close();
+		}
+
+		if (remove("OLD.dat") != 0){
+			cerr << "No se pudo remover el archivo temp";
+		}
+
 	}
 	//ugly hacks everyfuckingwhere

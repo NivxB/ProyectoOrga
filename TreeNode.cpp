@@ -18,13 +18,19 @@ TreeNode::~TreeNode(){
 }
 
 void TreeNode::clear(){
-    delete[] llaves;
+    if(llaves){
+        delete[] llaves;
+        //llaves = NULL;
+    }
+    for (int i = 0 ;i<degree;i++){
+        if(hijos[i])
+            hijos[i]->clear();
+    }
     nKeys = 0;
-    llaves = NULL;
-    for (int i = 0 ;i<nKeys;i++)
-        hijos[i]->clear();
-    delete[] hijos;
-    hijos = NULL;
+    if(hijos){
+        delete[] hijos;
+        //hijos = NULL;
+    }
 }
 
 void TreeNode::write(ostream& out){

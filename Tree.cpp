@@ -11,8 +11,9 @@ TreeNode* Tree::getRoot(){
 
 void Tree::clear(){
     if (root){
-        root -> clear();
-        delete root;
+        //root -> clear();
+        //delete root;
+        root = NULL;
     }
 }
 

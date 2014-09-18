@@ -1,6 +1,7 @@
 	#include <iostream>
 	#include <fstream>
 	#include <cstring>
+	#include <string>
 	#include <vector>
 	#include <sstream>
 	#include <cstdlib>
@@ -31,6 +32,7 @@
 	void Reindexar();
 	void cruzarIndices();
 	void cruzarArboles();
+	void cruzarDURO();
 	int validarEntradaInt();
 	int validarEntradaInt(int opc);
 	void LoadTree(string FileName,Tree*);
@@ -54,6 +56,22 @@
 	    vector<string> elems;
 	    split(s, delim, elems);
 	    return elems;
+	}
+
+
+	bool COMPARAR(string S1,string S2){
+		if (S1.length() != S2.length())
+			return false;
+		const char* ALGO1 = S1.c_str();
+		const char* ALGO2 = S2.c_str();
+		
+		for (int i = 0; i<S1.length() ; i++){
+			if (ALGO1[i] != ALGO2[i])
+				return false;
+		}
+
+
+		return true;	
 	}
 
 	/**
@@ -119,7 +137,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 		while(cont){
 			int sel;
 			cout<<"-------------------------\n1. Crear nueva estructura\n2. Ver registros en estructura\n3. Modificar\n4. Registros\n5. Reindexar\n6. Cruzar\n7. Generar Datos\n8. Compactar\n9. Salir"<<endl;
-			cin>>sel;//validar sel
+			sel = validarEntradaInt(9);//validar sel
 
 			switch(sel){
 				case 1:{
@@ -135,7 +153,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 					while (RegistroSelect){
 						int SelectionRegistro;
 						cout<<"-------------------------\n1. Agregar\n2. Eliminar\n3. Buscar \n4. Retornar"<<endl;
-						cin>>SelectionRegistro;
+						SelectionRegistro= validarEntradaInt(4);
 						switch(SelectionRegistro){
 							case 1:{
 								AddRegistro();
@@ -148,7 +166,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 							case 3:{
 								int selBuscar;
 								cout<<"-------------------------\n1. Indice\n2. Sin Indice\n"<<endl;
-								cin >> selBuscar;
+								selBuscar=validarEntradaInt(2);
 								switch(selBuscar){
 									case 1:{
 										BuscarRegistroIndice();
@@ -194,8 +212,8 @@ void quickSort(IndexClass* arr, int left, int right) {
 				}
 				case 6:{
 					int selBuscar;
-					cout<<"-------------------------\n1. Indice\n2. Arbol\n"<<endl;
-					cin >> selBuscar;
+					cout<<"-------------------------\n1. Indice\n2. Arbol\n3. Duro\n"<<endl;
+					selBuscar=validarEntradaInt(3);
 					switch(selBuscar){
 						case 1:{
 							cruzarIndices();
@@ -204,6 +222,9 @@ void quickSort(IndexClass* arr, int left, int right) {
 						case 2:{
 							cruzarArboles();
 							break;
+						}
+						case 3:{
+							cruzarDURO();
 						}
 					}
 					break;
@@ -234,7 +255,7 @@ void quickSort(IndexClass* arr, int left, int right) {
 		if(nLines>0){//hay alguna manera de hacer esto sin tener que abrir el archivo dos veces, lo se en mi corazon
 			cout<<"Ingrese el numero del archivo sobre el que desea trabajar: "<<endl;
 			int sel;
-			cin>>sel;//validar sel
+			sel=validarEntradaInt(nLines);//validar sel
 			
 			line = Estructura[sel - 1];
 
@@ -1076,13 +1097,23 @@ void quickSort(IndexClass* arr, int left, int right) {
 
 				//RegisFind[LongitudRegistro - 1] = ' '
 
-				cout << RegisFind << "ESPACIO ";
+				//cout << RegisFind << "ESPACIO ";
+
+				for (int i = 0 ; i<LongitudRegistro-1 ; i++)
+					cout<<RegisFind[i];
+				cout << endl;
+
 				fclose(SearchFile);
 				FILE* SearchFile2 = fopen(c2,"r+");
 				fseek(SearchFile2,(Index[i].getRRN()*LongitudRegistro2)+HeaderSize2,SEEK_SET);
 				char RegisFind2[LongitudRegistro2];
 				fread(RegisFind2,1,LongitudRegistro2,SearchFile2);
-				cout << RegisFind2<< endl;
+				//cout << RegisFind2<< endl;
+				
+				for (int i = 0 ; i<LongitudRegistro2-1 ; i++)
+					cout<<RegisFind2[i];
+				cout << endl<<endl;
+
 				fclose(SearchFile2);
 				encontrado2=-1;
 			}
@@ -1175,13 +1206,23 @@ void quickSort(IndexClass* arr, int left, int right) {
 					fseek(SearchFile,(Index2[encontrado2].getRRN()*LongitudRegistro)+HeaderSize,SEEK_SET);
 					char RegisFind[LongitudRegistro];
 					fread(RegisFind,1,LongitudRegistro,SearchFile);
-					cout << RegisFind << " ESPACIO ";
+					//cout << RegisFind << " ESPACIO ";
+					
+					for (int i = 0 ; i<LongitudRegistro-1 ; i++)
+						cout<<RegisFind[i];
+					cout << endl;
+
 					fclose(SearchFile);
 					FILE* SearchFile2 = fopen(c2,"r+");
 					fseek(SearchFile2,(Index[i].getRRN()*LongitudRegistro2)+HeaderSize2,SEEK_SET);
 					char RegisFind2[LongitudRegistro2];
 					fread(RegisFind2,1,LongitudRegistro2,SearchFile2);
-					cout << RegisFind2<< endl;
+					//cout << RegisFind2<< endl;
+
+					for (int i = 0 ; i<LongitudRegistro2-1 ; i++)
+						cout<<RegisFind2[i];
+					cout << endl << endl;	
+
 					fclose(SearchFile2);
 					encontrado2=-1;
 				}
@@ -1220,4 +1261,80 @@ void quickSort(IndexClass* arr, int left, int right) {
 		}
 
 	}
+
+	void cruzarDURO(){
+		/*
+		string File1 = workingFile();
+		string File2 = workingFile();
+		string line1;
+		string line2;
+
+		int KeyC1 = 0;
+		int KeyC2 = 0;
+
+		ifstream File_1(File1.c_str());
+		ifstream File_2(File2.c_str());
+
+		if (File_1.is_open() && File_2.is_open()){
+			getline(File_1,line1);
+			getline(File_2,line2);
+
+			getline(File_1,line1);
+			vector<string> tempEstructura = split(line1,'$');
+			for (int i = 0; i<tempEstructura.size();i++){
+				vector<string> bufferz = split(tempEstructura.at(i),'|');
+				if (!strcmp(bufferz[3].c_str(),"1")){
+					KeyC1 = i;
+					break;
+				}
+			}
+
+			getline(File_2,line2);
+
+			tempEstructura = split(line2,'$');
+			for (int i = 0; i<tempEstructura.size();i++){
+				vector<string> bufferz = split(tempEstructura.at(i),'|');
+				if (!strcmp(bufferz[3].c_str(),"1")){
+					KeyC2 = i;
+					break;
+				}
+			}
+
+
+			while (getline(File_1,line1)){
+				vector<string> buffer = split (line1,'|');
+
+					//cout << "ANTES WHILE" << endl;
+
+				while (getline(File_2,line2)){
+					vector<string> buffer2 = split(line2 , '|');
+
+					//if (buffer[0].compare( buffer2[0] ) == 0){
+					int K1 = atoi(buffer[0].c_str());
+					int K2 = atoi(buffer2[0].c_str());
+
+
+					cout << K1 << "SS " << K2 <<endl;
+
+					if (K1 == K2){
+						for (int i = 0 ; i < buffer.size() - 1 ; i++ )
+							cout << buffer[i]<<;
+						cout << endl;
+
+						for (int i = 0 ; i < buffer2.size() - 1 ; i++ )
+							cout << buffer2[i];
+						cout << endl<<endl;
+						cout << line1 <<endl;
+						cout << line2 << endl;
+						cout << endl;
+						break;
+
+					}
+				}
+			}
+		}
+		*/
+		cruzarIndices();
+	}
+	
 	//ugly hacks everyfuckingwhere
